@@ -1,0 +1,151 @@
+CKA-2025
+1. Docker fundamentals
+    - what is Docker
+    - vms vs containersation
+    - Architecture
+    - Docker flow
+    - Docker commands
+
+2. Dockerzise the application
+    - Dockerfile
+    - Dockerfile related commands
+3. Docker Multistage builds
+4. Importance of kubernetes
+5. kubernetes Architecture
+    - controlplane v/s workernodes
+    - Overview
+6. Installtion
+    - kind installtion or minikube/microk8s
+7. Pod in kubernetes
+8. Replicaset / Replication controller and Deployments
+9. services in kubernetes
+10.Namespaces
+11.Multicontainer Pod
+12.Demonset and statefulset cronjobs and job
+13.static pod 
+    - static pod..?
+    - Labels and selectors
+    - Manual scheduling 
+14.Taints and tolerations..
+15.Node affinity
+16.Resourse utilisation and limits
+17 autoscaling in kubernetes
+    - horizontal and vertical scaling 
+    - HPA,VPA, and cluster autoscaling
+18. probes
+    - Liveliness and readiness probes
+    - health check
+19. config and secrets
+20. SSL/ TLs work ..
+21. TLs
+22. Autherisation in kubernetes
+23. RBAC--> Role baased access control 
+24. cluster role and rolebinding
+25. service account
+26. Networking policy
+27. Prod cluster kubeadm
+28. Docker storage
+29. kubernetes storage
+30. how does DNS work
+31. How DNS works in kubernetes
+32. kube Networking
+33. Ingress and egress
+34. version upgrade on cluster
+35. etcd backup and restore
+36. monitoring and logg and alerting 
+37. troubleshooting the application
+38. kube components troubleshooting
+39. Networking troubleshooting
+40. json file creations 
+
+
+
+2. Dockerzise the application
+    - Dockerfile
+    - Dockerfile related commands
+
+
+Why we need dockerfile..?
+Docker can build images automatically by reading the instructions from a Dockerfile. A Dockerfile is a text document that contains all the commands a user could call on the command line to assemble an image. This page describes the commands you can use in a Dockerfile.
+
+Dockerfile commands:
+
+FROM: is always base image /application-image or os-image
+ENV: set the envinornment value in the container envinornment
+RUN: instruction will execute any commands to create a new layer on top of the current image
+COPY: it always copies the file from docker host to containers
+ADD: It also performs as copy but in addition it will extract the tar files and it also download the links from web as well 
+CMD:
+    puspose: whenever we specify the commadsto run it will run at container runtime
+
+example: 
+        FROM ubuntu:24.04
+        CMD ["sleep","5"]
+        #CMD ["command","parameter"] #this is json array format
+
+
+ENTRYPOINT:
+EXPOSE:
+LABEL:
+
+example docker file
+--------------------
+FROM ubuntu:24.04
+ENV user=cka
+RUN apt-get update && \
+    apt-get install apache2 -y && \
+    apt-get clean
+COPY index.html /var/www/html/
+EXPOSE 80
+CMD ["apache2ctl", "-D", "FOREGROUND"]
+
+sytsemctl start docker
+
+
+commads:
+docker build -t cka-2025 .
+docker run -it -d -p 8080:80 519d0ff27d34 
+
+
+
+
+
+3. Docker Multistage builds
+
+example of normal dockerfile
+
+FROM node:16
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD ["npm","start"]
+
+commands:
+    docker build -t react .
+    docker run -it -p 3000:3000 react
+
+docker images:
+react        latest    9382f0449e1c   14 minutes ago   1.24GB
+
+As DOCKER Multistage
+[root@Dockerhost React-app-to-do]# cat Dockerfile-multi
+FROM node:18-alpine AS installer
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+FROM nginx:latest AS deployer
+COPY --from=installer /app/build /usr/share/nginx/html
+
+commands:
+     docker build -t multistage -f Dockerfile-multi .
+    
+
+SIZE comparasion:
+[root@Dockerhost React-app-to-do]# docker images
+REPOSITORY   TAG       IMAGE ID       CREATED          SIZE
+multistage   latest    8013a74aa19a   2 minutes ago    194MB
+react        latest    9382f0449e1c   14 minutes ago   1.24GB
